@@ -1,0 +1,255 @@
+----------
+ Termin 1
+----------
+
+ 'destination',             -   category    !
+ 'passanger',               -   category
+ 'weather',                 -   category
+ 'temperature',             -   numeric
+ 'time',                    -   category
+ 'coupon',                  -   category
+ 'expiration',              -   category
+ 'gender',                  -   category
+ 'age',                     -   category 
+ 'maritalStatus',           -   category
+ 'has_children',            -   category
+ 'education',               -   category
+ 'occupation',              -   category
+ 'income',                  -   category
+ 'car',                     -   category / ??? nans als kategorie
+ 'Bar',                     -   category
+ 'CoffeeHouse',             -   category / numeric
+ 'CarryAway',               -   category / numeric
+ 'RestaurantLessThan20',    -   category / numeric
+ 'Restaurant20To50',        -   category
+ 'toCoupon_GEQ5min',        -   category
+ 'toCoupon_GEQ15min',       -   category
+ 'toCoupon_GEQ25min',       -   category
+ 'direction_same',          -   category
+ 'direction_opp',           -   category
+ 'Y'
+
+naiver ansatz, alle features one hot encoden, nichts rauswerfen
+
+
+----------
+ Termin 2
+----------
+
+fillna
+getdummies
+korrelation
+lasso gewichte
+gbt mehr bäume
+label verteilung
+
+findings dokumentieren für präsentation
+________________________________
+
+FillNA
+    data['Native Country'].fillna(data['Native Country'].mode(), inplace=True)
+    funktioniert so nicht
+    .mode() gibt ein Series object zurück, geordnet nach Häufigkeit
+    deshalb .mode()[0] um den echten Modus auszuwählen
+    der Modus kann nicht Nan sein. Daher würde auch bei unzureichender Datenmenge aufgefüllt
+
+OHE
+    pd.get_dummies() arbeitet auch mit for in schleife auf columns array
+    und geschachteltem for in auf feature array pro column
+    schleifen sind allerdings auf Unteraufrufe der Funktionen _get_dummies_1d() verteilt
+    
+    zusätzliche Vorverarbeitung um betroffene columns zu bestimmen
+    
+
+Scaling vor oder nach Feature Selection?
+(betrifft eigentlich nur temperature)
+
+Feature Selection
+    feature_importances_ was macht der '_' am Ende?
+    wo baut man den random_state= ein?
+    
+    Korrelationen
+        zu viele Features / unübersichtlich
+            => Heatmap nur mit Top 20 Features?
+            
+        OHE-Features sind untereinander negativ korreliert
+            => nur ein Repräsentant pro OHE in Heatmap?
+            => Heatmap vor OHE?
+            
+        time und destination/direction korrelieren
+            1.0 bei time_IS_7AM und destination_IS_Work
+        
+        has_children korrelliert mit maritalStatus, age und gender
+        
+        age und occupation korrellieren
+        
+        
+    
+        Mit Label
+         0.16   coupon_IS_Carry out & Take away
+         0.15   coupon_IS_Restaurant(<20)
+        -0.14   coupon_IS_Bar
+         0.13   destionation_IS_No Urgent Place
+         0.13   expiratio_IS_1d
+        -0.13   expiration_IS_2h
+        -0.13   CoffeHouse_IS_never
+         0.12   passenger_IS_Friends(s)
+         0.12   CoffeHouse_IS_1~3
+         0.11   weather_IS_Sunny
+         
+        Mit temperature
+        -0.61   weather_IS_Snowy
+         0.58   weather_IS_Sunny
+        
+        
+
+
+----------
+ Termin 3
+----------
+
+univariate selection details
+roc curve
+precision recall curve
+gbt mehr bäume
+korrelationen einzeln mit scatter plot darstellen (nur zu Präsentationszwecken)
+________________________________
+
+schlechte feature rauswerfen bringt nichts
+GBT mehr bäume -> crash
+
+roc curve / prc curve
+
+    wie gehabt: LogReg < RF < GBT
+    
+    wo sind die thresholds im plot?
+    warum mehr thresholds als FPR oder TPR? welche gehören zusammen?
+	--- array auf duplikate prüfen
+    einfluss auf training? threshold wahl? immer 0.5 bzw maximum? 
+	--- nach training entscheiden, betriebskosten
+	--- cost sensitive learning
+    takeaway für feature engineering?
+	--- nix
+    
+----------
+ Termin 4
+----------
+TODO:
+
+
+
+scatterplots zu korrelationen
+
+
+(cost sensitive learning)
+---
+
+gridsearch mit kopien
+    done
+
+
+threshold array auf duplikate prüfen
+    keine duplikate =/
+    warum weniger FPR werte als thresholds bleibt unklar
+
+
+kaggle nach ideen für feature cleaning/synthese durchstöbern
+
+    vor NA fill prüfen ob NAs zufällig verteilt, sonst einfach Zeile droppen
+na_columns = ['Bar', 'CoffeeHouse', 'CarryAway', 'RestaurantLessThan20', 'Restaurant20To50']
+na_df = df[na_columns]
+msno.matrix(na_df, figsize=(10, 8))
+plt.show()
+
+    manche kategorische feature lassen sich in numerische konvertieren (z.b. age, income)
+    oder wenigstens nach innerer ordnung auf ordinale mappen
+    
+    dimension reduction (PCA)
+
+
+    feature expansion (kernel SVM)
+    K-prototypes clustering
+    cluster label als neues feature
+    
+    auf kaggle kommt auch niemand über 76% accuracy / 0.8 f1-score
+    
+    
+auto ML (framework)
+    ExtraTreesClassifier(
+        RandomForestClassifier(input_matrix, bootstrap=False, criterion=entropy, max_features=0.1,
+                                min_samples_leaf=2, min_samples_split=10, n_estimators=100), bootstrap=False,
+                                criterion=gini, max_features=0.7500000000000001, min_samples_leaf=14,
+                                min_samples_split=4, n_estimators=100)
+                                
+    accuracy 0.7584358246609902
+    
+    
+univariate selection doku
+    chi2
+    (actual - expected)^2 / deviation
+    p values und freiheitsgrade
+    
+    
+----------
+ Termin 5
+----------
+
+TODO:
+autoML hintergrund
+
+!!! neuronale netzte pytorch !!!
+    erstmal hello world
+    automatisierung überspringen
+
+feature analyse - model understanding - aus trainiertem model rückschlüsse ziehen
+    leicht bei logreg (gewichte), schwierig bei ensemble (RF)
+    feature importance / feature permutieren -> änderung am ergebnis?
+---
+
+Dataset / Tensor aus .csv gewinnen
+    Fill NA und OHE?
+    Scaling?
+    Train, test splitt wann?
+    In anderen Notebooks vorverarbeiten und dann als CSV speichern?
+    
+Wie viele Output neuronen? 1 oder 2? Auswirkung auf Label Tensor
+
+Warum geht CrossEntropyLoss nicht?
+
+Warum ist die Accuracy so schlecht?
+    Implementierungsfehler?
+    Schlechtes Layout? Wie findet man ein besseres?
+    
+flatten rausnehmen
+am ende kein relu
+kein OHE, pytorch sagen, dass kategorische features -> embeddings
+loss berechnung plotten
+
+was kommt in die Präsentation
+    - Geschichte
+    - was will ich zeigen (Plots, Erklärungen)
+    - exploration
+    - was soll am ende drin stehen, daraufhin
+    - journey, nicht nur output, sondern auch was wurde gelernt
+    
+    
+    
+----------
+ Termin 6
+----------
+    
+TODO:
+flatten rausnehmen
+am ende kein relu
+kein OHE, pytorch sagen, dass kategorische features -> embeddings
+trainings loss berechnung plotten -> architektur anpassen
+
+was kommt in die Präsentation
+    - Geschichte
+    - was will ich zeigen (Plots, Erklärungen)
+    - exploration
+    - was soll am ende drin stehen, daraufhin
+    - journey, nicht nur output, sondern auch was wurde gelernt
+    
+    
+    
